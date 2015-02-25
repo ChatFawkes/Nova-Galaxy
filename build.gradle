@@ -49,10 +49,10 @@ task("buildNovaServer", type: Zip)
     }
     
     //copy submodule configs into config folder
-    into('config') { from fileTree('nova-galaxy-configs/config')}
+    into('config') { from fileTree('Nova-Galaxy-Configs/config')}
   
     //copy submodule scripts into scripts folder
-    into('scripts') { from fileTree('nova-galaxy-configs/scripts')}
+    into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
 	
     // Copy over server only mods.
     into('mods'){ from fileTree('servermods') }
