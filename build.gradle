@@ -1,0 +1,71 @@
+// ------------------
+// START >> INIT
+// ------------------
+
+defaultTasks "cleanup", "buildNovaServer"
+
+ext.buildProps = file "build.properties"
+
+buildProps.withReader {
+    def prop = new Properties()
+    prop.load(it)
+    ext.config = new ConfigSlurper().parse prop
+}
+
+// Set build number to default if evnrionment variable does not exist.
+if (System.getenv("BUILD_NUMBER") != null) {
+    ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${System.getenv().BUILD_NUMBER}"
+}
+else {
+    ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${config.packNonJenkinsBuild}"
+}
+
+wrapper {
+    version = "1.8"
+}
+
+task cleanup(type: Delete) {
+  delete 'output'
+}
+
+// ------------------------------------
+// START >> BUILDING NOVA GALAXY SERVER
+// ------------------------------------
+
+task("buildNovaServer", type: Zip)
+{
+    description = 'Builds a Nova Galaxy server modpack zip'
+
+    // Grab all the files that makeup a server installation.
+    from('.')
+	{
+        include 'config/**'
+        include 'coremods/**'
+        include 'mods/**'
+        include 'libraries/**'
+        include 'scripts/**'
+        include 'Server**'
+        include 'ForgeS**'
+    }
+    
+    //copy submodule configs into config folder
+    into('config') { from fileTree('nova-galaxy-configs/config')}
+  
+    //copy submodule scripts into scripts folder
+    into('scripts') { from fileTree('nova-galaxy-configs/scripts')}
+	
+    // Copy over server only mods.
+    into('mods'){ from fileTree('servermods') }
+	
+	// Do not get empty directories from which no files are included.
+    includeEmptyDirs = false
+
+    // Print out each file that we package into the mod pack.
+    eachFile { file -> logger.lifecycle "packing $file" }
+
+    // Create base filename for our creation.
+    baseName = "./output/${config.archivesBaseName}-$pack_version-server"
+
+    // Logging is always important.
+    doLast { logger.lifecycle "Nova Galaxy Server Created: $archivePath" }
+}
