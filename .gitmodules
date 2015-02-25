@@ -1,0 +1,3 @@
+[submodule "nova-galaxy-configs"]
+	path = nova-galaxy-configs
+	url = https://ChatFawkes@bitbucket.org/ChatFawkes/nova-galaxy-configs.git
