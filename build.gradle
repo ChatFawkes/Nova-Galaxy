@@ -29,7 +29,7 @@ task cleanup(type: Delete) {
 }
 
 // ------------------------------------
-// START >> BUILDING NOVA GALAXY SERVER
+// START >> BUILD NOVA GALAXY SERVER
 // ------------------------------------
 
 task("buildNovaServer", type: Zip)
@@ -40,7 +40,6 @@ task("buildNovaServer", type: Zip)
     from('.')
 	{
         include 'config/**'
-        include 'coremods/**'
         include 'mods/**'
         include 'libraries/**'
         include 'scripts/**'
@@ -67,11 +66,11 @@ task("buildNovaServer", type: Zip)
     baseName = "./output/${config.archivesBaseName}-$pack_version-server"
 
     // Logging is always important.
-    doLast { logger.lifecycle "Nova Galaxy Server Created: $archivePath" }
+    doLast { logger.lifecycle "Nova Galaxy Server Zip Archive Created: $archivePath" }
 }
 
 // ------------------------------------
-// START >> BUILDING NOVA GALAXY CONFIGS
+// START >> BUILD NOVA GALAXY CONFIGS
 // ------------------------------------
 
 task("buildNovaConfigs", type: Zip)
@@ -97,4 +96,7 @@ task("buildNovaConfigs", type: Zip)
     eachFile { file -> logger.lifecycle "packing $file" }
     
     baseName = "./output/configs-${config.archivesBaseName}-$pack_version"
+    
+    // Log creation of Config Zip
+    doLast { logger.lifecycle "Nova Galaxy Configs Zip Archive Created: $archivePath" }
 }
