@@ -2,7 +2,7 @@
 // START >> INIT
 // ------------------
 
-defaultTasks "cleanup", "buildNovaServer", "buildNovaConfigs"
+defaultTasks "cleanup", buildNovaClient, "buildNovaServer", "buildNovaConfigs"
 
 ext.buildProps = file "build.properties"
 
@@ -26,6 +26,47 @@ wrapper {
 
 task cleanup(type: Delete) {
   delete 'output'
+}
+
+// ------------------------------------
+// START >> BUILD NOVA GALAXY CLIENT
+// ------------------------------------
+
+task("buildNovaClient", type: Zip)
+{
+    description = 'Builds a Nova Galaxy client modpack zip'
+
+    // Grab all the files that makeup a server installation.
+    from('.')
+	{
+        include 'config/**'
+        include 'mods/**'
+        include 'scripts/**'
+    }
+    
+    //copy submodule configs into config folder
+    into('config') { from fileTree('Nova-Galaxy-Configs/config')}
+    
+    //copy submodule clientconfigs into config folder
+    into('config'){ from fileTree('Nova-Galaxy-Configs/clientconfig') }
+  
+    //copy submodule scripts into scripts folder
+    into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
+	
+    // Copy over client-only mods into mods folder.
+    into('mods'){ from fileTree('clientmods') }
+	
+	// Do not get empty directories from which no files are included.
+    includeEmptyDirs = false
+
+    // Print out each file that we package into the client pack.
+    eachFile { file -> logger.lifecycle "packing $file" }
+
+    // Create base filename for our creation.
+    baseName = "./output/${config.archivesBaseName}-$pack_version-client"
+
+    // Log creation of client zip
+    doLast { logger.lifecycle "Nova Galaxy Client Zip Archive Created: $archivePath" }
 }
 
 // ------------------------------------
@@ -59,13 +100,13 @@ task("buildNovaServer", type: Zip)
 	// Do not get empty directories from which no files are included.
     includeEmptyDirs = false
 
-    // Print out each file that we package into the mod pack.
+    // Print out each file that we package into the server pack.
     eachFile { file -> logger.lifecycle "packing $file" }
 
     // Create base filename for our creation.
     baseName = "./output/${config.archivesBaseName}-$pack_version-server"
 
-    // Logging is always important.
+    // Log creation of server zip
     doLast { logger.lifecycle "Nova Galaxy Server Zip Archive Created: $archivePath" }
 }
 
@@ -92,11 +133,11 @@ task("buildNovaConfigs", type: Zip)
     //copy submodule scripts into scripts folder
     into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
     
-    // Print out each file that we package into the mod pack.
+    // Print out each file that we package into the config zip.
     eachFile { file -> logger.lifecycle "packing $file" }
     
     baseName = "./output/configs-${config.archivesBaseName}-$pack_version"
     
-    // Log creation of Config Zip
+    // Log creation of configs zip
     doLast { logger.lifecycle "Nova Galaxy Configs Zip Archive Created: $archivePath" }
 }
