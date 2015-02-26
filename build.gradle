@@ -2,7 +2,7 @@
 // START >> INIT
 // ------------------
 
-defaultTasks "cleanup", buildNovaClient, "buildNovaServer", "buildNovaConfigs"
+defaultTasks "cleanup", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
 
 ext.buildProps = file "build.properties"
 
