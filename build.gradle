@@ -2,7 +2,18 @@
 // START >> INIT
 // ------------------
 
-defaultTasks "cleanup", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'de.undercouch:gradle-download-task:1.2'
+    }
+}
+
+apply plugin: 'de.undercouch.download'
 
 ext.buildProps = file "build.properties"
 
@@ -24,12 +35,28 @@ wrapper {
     version = "1.8"
 }
 
-task cleanup(type: Delete) {
+// ------------------------------------
+// CLEAN UP OUTPUT DIRECTORY
+// ------------------------------------
+
+task ("cleanup", type: Delete) {
   delete 'output'
 }
 
+
 // ------------------------------------
-// START >> BUILD NOVA GALAXY CLIENT
+// DOWNLOAD FASTCRAFT
+// ------------------------------------
+
+import de.undercouch.gradle.tasks.download.Download
+
+task("downloadFastcraft", type: Download) {
+    src 'http://files.player.to/fastcraft-1.19.jar'
+    dest 'output/'
+}
+
+// ------------------------------------
+// BUILD NOVA GALAXY CLIENT
 // ------------------------------------
 
 task("buildNovaClient", type: Zip)
@@ -42,6 +69,7 @@ task("buildNovaClient", type: Zip)
         include 'config/**'
         include 'mods/**'
         include 'scripts/**'
+        include 'output/fast**'
     }
     
     //copy submodule configs into config folder
@@ -70,7 +98,7 @@ task("buildNovaClient", type: Zip)
 }
 
 // ------------------------------------
-// START >> BUILD NOVA GALAXY SERVER
+// BUILD NOVA GALAXY SERVER
 // ------------------------------------
 
 task("buildNovaServer", type: Zip)
@@ -86,6 +114,7 @@ task("buildNovaServer", type: Zip)
         include 'scripts/**'
         include 'Server**'
         include 'ForgeS**'
+        include 'output/fast**'
     }
     
     //copy submodule configs into config folder
@@ -111,7 +140,7 @@ task("buildNovaServer", type: Zip)
 }
 
 // ------------------------------------
-// START >> BUILD NOVA GALAXY CONFIGS
+// BUILD NOVA GALAXY CONFIGS
 // ------------------------------------
 
 task("buildNovaConfigs", type: Zip)
