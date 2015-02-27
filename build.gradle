@@ -1,8 +1,10 @@
 // ------------------
 // START >> INIT
 // ------------------
-
-defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+if (project.hasProperty("fastcraft") && project.getProperty("fastcraft") == "true")
+    defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+ else 
+     defaultTasks "cleanup","buildNovaClient", "buildNovaServer", "buildNovaConfigs"
 
 buildscript {
     repositories {
@@ -30,10 +32,6 @@ if (System.getenv("BUILD_NUMBER") != null) {
 }
 else {
     ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${config.packNonJenkinsBuild}"
-}
-
-wrapper {
-    version = "1.8"
 }
 
 // ------------------------------------
