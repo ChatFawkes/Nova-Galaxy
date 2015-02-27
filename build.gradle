@@ -39,7 +39,7 @@ else {
 // ------------------------------------
 
 task ("cleanup", type: Delete) {
-  delete 'output'
+  delete fileTree(dir: "output", exclude: "fastcraft-1.19.jar")
 }
 
 
