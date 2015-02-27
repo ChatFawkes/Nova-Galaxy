@@ -14,6 +14,7 @@ buildscript {
 }
 
 apply plugin: 'de.undercouch.download'
+apply plugin: 'java'
 
 ext.buildProps = file "build.properties"
 
@@ -51,8 +52,9 @@ task ("cleanup", type: Delete) {
 import de.undercouch.gradle.tasks.download.Download
 
 task("downloadFastcraft", type: Download) {
-    src 'http://files.player.to/fastcraft-1.19.jar'
-    dest 'output/'
+    if (project.hasProperty("fastcraft") && project.getProperty("fastcraft") == "true")
+        src 'http://files.player.to/fastcraft-1.19.jar'
+        dest new File('output', 'fastcraft-1.19.jar')
 }
 
 // ------------------------------------
@@ -89,9 +91,11 @@ task("buildNovaClient", type: Zip)
 
     // Print out each file that we package into the client pack.
     eachFile { file -> logger.lifecycle "packing $file" }
+    
 
     // Create base filename for our creation.
-    baseName = "./output/${config.archivesBaseName}-$pack_version-client"
+    destinationDir = file 'output'
+    baseName = "./${config.archivesBaseName}-$pack_version-client"
 
     // Log creation of client zip
     doLast { logger.lifecycle "Nova Galaxy Client Zip Archive Created: $archivePath" }
@@ -133,7 +137,8 @@ task("buildNovaServer", type: Zip)
     eachFile { file -> logger.lifecycle "packing $file" }
 
     // Create base filename for our creation.
-    baseName = "./output/${config.archivesBaseName}-$pack_version-server"
+    destinationDir = file 'output'
+    baseName = "./${config.archivesBaseName}-$pack_version-server"
 
     // Log creation of server zip
     doLast { logger.lifecycle "Nova Galaxy Server Zip Archive Created: $archivePath" }
@@ -165,7 +170,9 @@ task("buildNovaConfigs", type: Zip)
     // Print out each file that we package into the config zip.
     eachFile { file -> logger.lifecycle "packing $file" }
     
-    baseName = "./output/configs-${config.archivesBaseName}-$pack_version"
+    // Create base filename for our creation.
+    destinationDir = file 'output'
+    baseName = "./configs-${config.archivesBaseName}-$pack_version"
     
     // Log creation of configs zip
     doLast { logger.lifecycle "Nova Galaxy Configs Zip Archive Created: $archivePath" }
