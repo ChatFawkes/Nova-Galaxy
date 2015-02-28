@@ -69,7 +69,6 @@ task("buildNovaClient", type: Zip)
         include 'config/**'
         include 'mods/**'
         include 'scripts/**'
-        include 'output/fast**'
     }
     
     //copy submodule configs into config folder
@@ -84,6 +83,9 @@ task("buildNovaClient", type: Zip)
     // Copy over client-only mods into mods folder.
     into('mods'){ from fileTree('clientmods') }
 	
+    // Copy over client-only mods into mods folder.
+    into('mods'){ from file('output/fastcraft-1.19.jar') }
+    
 	// Do not get empty directories from which no files are included.
     includeEmptyDirs = false
 
@@ -116,7 +118,6 @@ task("buildNovaServer", type: Zip)
         include 'scripts/**'
         include 'Server**'
         include 'ForgeS**'
-        include 'output/fast**'
     }
     
     //copy submodule configs into config folder
@@ -128,6 +129,9 @@ task("buildNovaServer", type: Zip)
     // Copy over server only mods.
     into('mods'){ from fileTree('servermods') }
 	
+    // Copy over client-only mods into mods folder.
+    into('mods'){ from file('output/fastcraft-1.19.jar') }
+    
 	// Do not get empty directories from which no files are included.
     includeEmptyDirs = false
 
