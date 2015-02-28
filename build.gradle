@@ -1,22 +1,6 @@
 // ------------------
 // START >> INIT
 // ------------------
-if (project.hasProperty("fastcraft") && project.getProperty("fastcraft") == "true")
-    defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
- else 
-     defaultTasks "cleanup","buildNovaClient", "buildNovaServer", "buildNovaConfigs"
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'de.undercouch:gradle-download-task:1.2'
-    }
-}
-
-apply plugin: 'de.undercouch.download'
-apply plugin: 'java'
 
 ext.buildProps = file "build.properties"
 
@@ -34,14 +18,37 @@ else {
     ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${config.packNonJenkinsBuild}"
 }
 
+def fastcraftURL = "http://files.player.to/fastcraft-${config.fastcraftVersion}.jar"
+def fastcraftOutput = "output/fastcraft-${config.fastcraftVersion}.jar"
+def files = file(fastcraftOutput)
+
+if (files.isFile()) {
+    defaultTasks "cleanup", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+} else {
+    defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'de.undercouch:gradle-download-task:1.2'
+    }
+}
+
+apply plugin: 'de.undercouch.download'
+apply plugin: 'java'
+
+def fastcraftInOutput = "fastcraft-${config.fastcraftVersion}.jar"
+
 // ------------------------------------
 // CLEAN UP OUTPUT DIRECTORY
 // ------------------------------------
 
 task ("cleanup", type: Delete) {
-  delete fileTree(dir: "output", exclude: "fastcraft-1.19.jar")
+  delete fileTree(dir: "output", exclude: fastcraftInOutput)
 }
-
 
 // ------------------------------------
 // DOWNLOAD FASTCRAFT
@@ -49,10 +56,9 @@ task ("cleanup", type: Delete) {
 
 import de.undercouch.gradle.tasks.download.Download
 
-task("downloadFastcraft", type: Download) {
-    if (project.hasProperty("fastcraft") && project.getProperty("fastcraft") == "true")
-        src 'http://files.player.to/fastcraft-1.19.jar'
-        dest new File('output', 'fastcraft-1.19.jar')
+task ("downloadFastcraft", type: Download) {
+    src fastcraftURL
+    dest fastcraftOutput
 }
 
 // ------------------------------------
@@ -83,8 +89,8 @@ task("buildNovaClient", type: Zip)
     // Copy over client-only mods into mods folder.
     into('mods'){ from fileTree('clientmods') }
 	
-    // Copy over client-only mods into mods folder.
-    into('mods'){ from file('output/fastcraft-1.19.jar') }
+    // Copy over fastcraft into mods folder.
+    into('mods'){ from fastcraftOutput}
     
 	// Do not get empty directories from which no files are included.
     includeEmptyDirs = false
@@ -129,8 +135,8 @@ task("buildNovaServer", type: Zip)
     // Copy over server only mods.
     into('mods'){ from fileTree('servermods') }
 	
-    // Copy over client-only mods into mods folder.
-    into('mods'){ from file('output/fastcraft-1.19.jar') }
+    // Copy over fastcraft into mods folder.
+    into('mods'){ from fastcraftOutput}
     
 	// Do not get empty directories from which no files are included.
     includeEmptyDirs = false
