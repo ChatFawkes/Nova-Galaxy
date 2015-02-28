@@ -8,8 +8,10 @@ Repository for the Nova Galaxy Modpack
 - Issue/Feedback Tracker (to the right)
 
 ####How to compile the modpack:
-Windows: Run BuildZips.bat  
-Linux/OSX: Run BuildZips.sh
+
+Windows: run/execute `gradlew.bat`
+
+Linux/OSX: run/execute `gradlew`
 
 This creates the client and server zip archives. It also creates a configs zip, but that is only needed by me.
 
