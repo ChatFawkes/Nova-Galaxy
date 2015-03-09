@@ -2,32 +2,7 @@
 // START >> INIT
 // ------------------
 
-ext.buildProps = file "build.properties"
-
-buildProps.withReader {
-    def prop = new Properties()
-    prop.load(it)
-    ext.config = new ConfigSlurper().parse prop
-}
-
-// Set build number to default if evnrionment variable does not exist.
-if (System.getenv("BUILD_NUMBER") != null) {
-    ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${System.getenv().BUILD_NUMBER}"
-}
-else {
-    ext.pack_version = "${config.packVersionMajor}.${config.packVersionMinor}.${config.packNonJenkinsBuild}"
-}
-
-def fastcraftURL = "http://files.player.to/fastcraft-${config.fastcraftVersion}.jar"
-def fastcraftOutput = "output/fastcraft-${config.fastcraftVersion}.jar"
-def files = file(fastcraftOutput)
-
-if (files.isFile()) {
-    defaultTasks "cleanup", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
-} else {
-    defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
-}
-
+// Import and apply download plugin
 buildscript {
     repositories {
         jcenter()
@@ -40,14 +15,33 @@ buildscript {
 apply plugin: 'de.undercouch.download'
 apply plugin: 'java'
 
-def fastcraftInOutput = "fastcraft-${config.fastcraftVersion}.jar"
+// Allow usage of values from build.properties
+ext.buildProps = file "build.properties"
+
+buildProps.withReader {
+    def prop = new Properties()
+    prop.load(it)
+    ext.config = new ConfigSlurper().parse prop
+}
+
+// Define variables
+def fastcraftURL = "http://files.player.to/fastcraft-${config.fastcraftVersion}.jar"
+def fastcraftOutput = "build/fastcraft-${config.fastcraftVersion}.jar"
+def fastcraftCleanup = "fastcraft-${config.fastcraftVersion}.jar"
+
+// Default Task
+if ( file (fastcraftOutput).isFile()) {
+    defaultTasks "cleanup", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+} else {
+    defaultTasks "cleanup", "downloadFastcraft", "buildNovaClient", "buildNovaServer", "buildNovaConfigs"
+}
 
 // ------------------------------------
 // CLEAN UP OUTPUT DIRECTORY
 // ------------------------------------
 
 task ("cleanup", type: Delete) {
-  delete fileTree(dir: "output", exclude: fastcraftInOutput)
+  delete fileTree(dir: "build", exclude: fastcraftCleanup)
 }
 
 // ------------------------------------
@@ -65,45 +59,39 @@ task ("downloadFastcraft", type: Download) {
 // BUILD NOVA GALAXY CLIENT
 // ------------------------------------
 
-task("buildNovaClient", type: Zip)
-{
+task ("buildNovaClient", type: Zip) {
     description = 'Builds a Nova Galaxy client modpack zip'
-
+    
     // Grab all the files that makeup a server installation.
-    from('.')
-    {
-        include 'config/**'
-        include 'mods/**'
-        include 'scripts/**'
+    from('.') {
+        include 'minecraft/**'
     }
     
-    //copy submodule configs into config folder
-    into('config') { from fileTree('Nova-Galaxy-Configs/config')}
-    
-    //copy submodule clientconfigs into config folder
-    into('config'){ from fileTree('Nova-Galaxy-Configs/clientconfig') }
-  
-    //copy submodule scripts into scripts folder
-    into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
-    
-    // Copy over client-only mods into mods folder.
-    into('mods'){ from fileTree('clientmods') }
+    // Copy over all universal and client-only mods into mods folder.
+    into('minecraft/mods'){ from fileTree ('mods')}
+    into('minecraft/mods'){ from fileTree ('mods-client')}
     
     // Copy over fastcraft into mods folder.
-    into('mods'){ from fastcraftOutput}
+    into('minecraft/mods'){ from fastcraftOutput}
+    
+    // Copy over all configs from submodule into config folder.
+    into('minecraft/config') { from fileTree ('Nova-Galaxy-Configs/config')}
+    into('minecraft/config') { from fileTree ('Nova-Galaxy-Configs/clientconfig')}
+    
+    // Copy over scripts from submodule into scripts folder.
+    into('minecraft/scripts') { from fileTree ('Nova-Galaxy-Configs/scripts')}
     
     // Do not get empty directories from which no files are included.
     includeEmptyDirs = false
 
     // Print out each file that we package into the client pack.
-    eachFile { file -> logger.lifecycle "packing $file" }
-    
+    // eachFile { file -> logger.lifecycle "packing $file" }
 
     // Create base filename for our creation.
-    destinationDir = file 'output'
-    baseName = "./${config.archivesBaseName}-$pack_version-client"
+    destinationDir = file 'build'
+    baseName = "./${config.archivesBaseName}-${config.packVersion}-client"
 
-    // Log creation of client zip
+    // Log creation of client zip.
     doLast { logger.lifecycle "Nova Galaxy Client Zip Archive Created: $archivePath" }
 }
 
@@ -111,44 +99,42 @@ task("buildNovaClient", type: Zip)
 // BUILD NOVA GALAXY SERVER
 // ------------------------------------
 
-task("buildNovaServer", type: Zip)
-{
+task ("buildNovaServer", type: Zip) {
     description = 'Builds a Nova Galaxy server modpack zip'
 
     // Grab all the files that makeup a server installation.
-    from('.')
-    {
+    from('.') {
         include 'config/**'
         include 'mods/**'
-        include 'libraries/**'
         include 'scripts/**'
-        include 'Server**'
-        include 'ForgeS**'
     }
     
-    //copy submodule configs into config folder
-    into('config') { from fileTree('Nova-Galaxy-Configs/config')}
-  
-    //copy submodule scripts into scripts folder
-    into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
-    
-    // Copy over server only mods.
-    into('mods'){ from fileTree('servermods') }
+    // Copy over server only mods into mods folder.
+    into('mods'){ from fileTree ('mods-server') }
     
     // Copy over fastcraft into mods folder.
     into('mods'){ from fastcraftOutput}
+    
+    // Copy over configs from submodule into config folder.
+    into('config') { from fileTree ('Nova-Galaxy-Configs/config')}
+  
+    // Copy over scripts from submodule into scripts folder.
+    into('scripts') { from fileTree ('Nova-Galaxy-Configs/scripts')}
+    
+    // Copy over server files to the archive's root.
+    into('') {from fileTree ('files-server')}
     
     // Do not get empty directories from which no files are included.
     includeEmptyDirs = false
 
     // Print out each file that we package into the server pack.
-    eachFile { file -> logger.lifecycle "packing $file" }
+    // eachFile { file -> logger.lifecycle "packing $file" }
 
     // Create base filename for our creation.
-    destinationDir = file 'output'
-    baseName = "./${config.archivesBaseName}-$pack_version-server"
+    destinationDir = file 'build'
+    baseName = "./${config.archivesBaseName}-${config.packVersion}-server"
 
-    // Log creation of server zip
+    // Log creation of server zip.
     doLast { logger.lifecycle "Nova Galaxy Server Zip Archive Created: $archivePath" }
 }
 
@@ -156,31 +142,28 @@ task("buildNovaServer", type: Zip)
 // BUILD NOVA GALAXY CONFIGS
 // ------------------------------------
 
-task("buildNovaConfigs", type: Zip)
-{
+task ("buildNovaConfigs", type: Zip) {
     description = 'Builds a Nova Galaxy config zip'
+    
     // Grab all the files that makeup a config installation.
-    from('.')
-    {
+    from('.') {
         include 'config/**'
         include 'scripts/**'
     }
 
-    //copy submodule configs into config folder
-    into('config') { from fileTree('Nova-Galaxy-Configs/config')}
-    
-    //copy submodule clientconfigs into config folder
-    into('config'){ from fileTree('Nova-Galaxy-Configs/clientconfig') }
+    // Copy over all configs from submodule into config folder.
+    into('config') { from fileTree ('Nova-Galaxy-Configs/config')}
+    into('config'){ from fileTree ('Nova-Galaxy-Configs/clientconfig') }
 
-    //copy submodule scripts into scripts folder
-    into('scripts') { from fileTree('Nova-Galaxy-Configs/scripts')}
+    // Copy over scripts from submodule into scripts folder.
+    into('scripts') { from fileTree ('Nova-Galaxy-Configs/scripts')}
     
     // Print out each file that we package into the config zip.
-    eachFile { file -> logger.lifecycle "packing $file" }
+    // eachFile { file -> logger.lifecycle "packing $file" }
     
     // Create base filename for our creation.
-    destinationDir = file 'output'
-    baseName = "./configs-${config.archivesBaseName}-$pack_version"
+    destinationDir = file 'build'
+    baseName = "./configs-${config.archivesBaseName}-${config.packVersion}"
     
     // Log creation of configs zip
     doLast { logger.lifecycle "Nova Galaxy Configs Zip Archive Created: $archivePath" }
