@@ -76,7 +76,6 @@ task ("buildNovaClient", type: Zip) {
     
     // Copy over all configs from submodule into config folder.
     into('minecraft/config') { from fileTree ('Nova-Galaxy-Configs/config')}
-    into('minecraft/config') { from fileTree ('Nova-Galaxy-Configs/clientconfig')}
     
     // Copy over scripts from submodule into scripts folder.
     into('minecraft/scripts') { from fileTree ('Nova-Galaxy-Configs/scripts')}
@@ -153,7 +152,6 @@ task ("buildNovaConfigs", type: Zip) {
 
     // Copy over all configs from submodule into config folder.
     into('config') { from fileTree ('Nova-Galaxy-Configs/config')}
-    into('config'){ from fileTree ('Nova-Galaxy-Configs/clientconfig') }
 
     // Copy over scripts from submodule into scripts folder.
     into('scripts') { from fileTree ('Nova-Galaxy-Configs/scripts')}
